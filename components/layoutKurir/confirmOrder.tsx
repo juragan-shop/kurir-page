@@ -96,13 +96,13 @@ export default function ConfirmOrder() {
         return token;
     }, [getToken]);
 
-    // NOTE: sesuaikan endpoint dengan backend kamu
+
     const fetchOrders = useCallback(async () => {
         if (!url) throw new Error("URL backend belum dikonfigurasi");
 
         const token = await getAuthToken();
 
-        const response = await fetch(`${url}/kurir/ordersList`, {
+        const response = await fetch(`${url}/kurir/orders`, {
             headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -126,9 +126,7 @@ export default function ConfirmOrder() {
             .finally(() => setLoading(false));
     }, [isLoaded, fetchOrders]);
 
-    /* ---------------------------- Handlers ---------------------------- */
 
-    // NOTE: sesuaikan endpoint dengan backend kamu
     const handleConfirm = async (id: string) => {
         if (!url) {
             setError("URL backend belum dikonfigurasi.");
@@ -182,7 +180,7 @@ export default function ConfirmOrder() {
         }
     };
 
-    /* ------------------------------ Styles ------------------------------ */
+   
 
     const card = cn(
         "rounded-2xl border transition-all duration-300",
@@ -193,7 +191,7 @@ export default function ConfirmOrder() {
     const muted = isDark ? "text-neutral-400" : "text-slate-500";
     const tile = cn("rounded-xl p-3", isDark ? "bg-white/5" : "bg-slate-50");
 
-    /* ------------------------------ Loading ------------------------------ */
+  
 
     if (!isLoaded || loading) {
         return (
@@ -212,11 +210,12 @@ export default function ConfirmOrder() {
         );
     }
 
-    /* -------------------------------- UI -------------------------------- */
+ 
 
     return (
         <section className="mx-auto w-full space-y-5 p-4 sm:p-6">
             {/* Header */}
+
             <div
                 className={cn(
                     "animate-in fade-in slide-in-from-bottom-2 duration-500",

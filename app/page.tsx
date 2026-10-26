@@ -20,33 +20,18 @@ import { useEffect, useState } from "react";
 import { formatTanggalIndonesia } from "@/utils/formatterDate";
 import useTheme from "@/hooks/useTheme";
 import { cn } from "@/utils";
-import { menuGroups } from "@/constant/menuBendahara";
 import { useAuth, useUser } from "@clerk/nextjs";
 import { useTabStore } from "@/store/useTabStore";
 import { TabKeyKurir, tabStrategies } from "@/store/tabKeyKurir";
 import { useRouter } from "next/navigation";
+import { DataUser } from "@/types";
+import { navItems } from "@/data";
 
-interface DataUser {
-  name: string;
-  alamat: string;
-  latitude: number;
-  longitude: number;
-}
-
-// FIX 1: item "chat" sebelumnya dobel (key kembar -> dua tombol aktif sekaligus)
-const navItems = [
-  { key: "home", label: "Beranda", Icon: Home },
-  { key: "orderPage", label: "Pesanan", Icon: PackageCheck },
-  { key: "chat", label: "Chat", Icon: MessageCircle },
-  { key: "historyOrder", label: "OrderHistory", Icon: MessageCircle },
-] as const;
 
 export default function BottomNav() {
   const activeTab = useTabStore((state) => state.activeTab);
   const setActiveTab = useTabStore((state) => state.setActiveTab);
-
   const { user } = useUser();
-
   const { ThemeToggle, isDark } = useTheme();
   const router = useRouter()
   const [open, setOpen] = useState(false);
@@ -56,38 +41,21 @@ export default function BottomNav() {
   const [isOnline, setIsOnline] = useState(true);
   const { isLoaded, isSignedIn } = useUser();
     useEffect(() => {
-  
     setNow(new Date());
-
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => {
-    // Tunggu sampai Clerk selesai memuat data
-    if (!isLoaded) return;
 
-    // User belum login
+    if (!isLoaded) return;
     if (!isSignedIn || !user) {
       router.replace('/signin');
       return;
     }
-
     const role = user.publicMetadata?.role;
-
-    // Redirect hanya jika role bukan kurir
     if (role !== 'kurir') {
-      router.replace('/');
+      router.replace('https://instagram.com');
     }
   }, [isLoaded, isSignedIn, user, router]);
 
-  // Jangan tampilkan halaman sebelum pemeriksaan selesai
-  if (!isLoaded || !user) {
-    return <p>Memuat data user...</p>;
-  }
-
-  if (user.publicMetadata?.role !== 'kurir') {
-    return <p>Memeriksa akses...</p>;
-  }
 
 
 
@@ -96,8 +64,7 @@ export default function BottomNav() {
   const firstName = user?.firstName ?? user?.fullName?.split(" ")[0];
 
   return (
-    // FIX 2: `isolate` = stacking context sendiri, z-index di halaman ini
-    // tidak bocor menimpa komponen lain di luarnya. min-h-dvh pas di HP.
+   
     <div
       className={cn(
         "relative isolate flex min-h-dvh flex-col",
@@ -173,7 +140,9 @@ export default function BottomNav() {
             <img
               src={user.imageUrl}
               alt="Foto kurir"
-              className="h-14 w-14 rounded-full border-2 border-white/70 object-cover"
+              className={cn(
+                "h-14 w-14 rounded-full border-2 border-white/70 object-cover"
+              )}
             />
           ) : (
             <div className="h-14 w-14 animate-pulse rounded-full bg-white/20" />
@@ -258,7 +227,7 @@ export default function BottomNav() {
       <main className="min-w-0 flex-1 px-4 pb-4 pt-5">{renderContent(activeTab)}</main>
 
       {/* Menu samping */}
-      <Sheet open={open} onOpenChange={setOpen}>
+      {/* <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
           side="left"
           className={cn(
@@ -354,7 +323,7 @@ export default function BottomNav() {
             </div>
           </div>
         </SheetContent>
-      </Sheet>
+      </Sheet> */}
 
       {/* FIX 4: Navigasi bawah.
                 Sebelumnya `fixed` + z-50 sehingga melayang di atas konten/komponen lain.
