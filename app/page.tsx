@@ -40,9 +40,14 @@ export default function BottomNav() {
   const [dataUser, setDataUser] = useState<DataUser | null>(null);
   const [isOnline, setIsOnline] = useState(true);
   const { isLoaded, isSignedIn } = useUser();
+
+
+  
     useEffect(() => {
     setNow(new Date());
   }, []);
+
+
   useEffect(() => {
 
     if (!isLoaded) return;

@@ -35,6 +35,7 @@ type OrderKurir = {
     latitude?: string | number | null;
     longitude?: string | number | null;
     kurirStatus?: string | null;
+    bendaharaStatus?: string | null;
 };
 
 /* ----------------------------- Helpers ----------------------------- */
@@ -101,17 +102,26 @@ export default function ConfirmOrder() {
         if (!url) throw new Error("URL backend belum dikonfigurasi");
 
         const token = await getAuthToken();
+        if (!token) {
+  throw new Error('Token Clerk tidak tersedia. Silakan login kembali.');
+}
 
-        const response = await fetch(`${url}/kurir/orders`, {
-            headers: { Authorization: `Bearer ${token}` },
-        });
+const response = await fetch(`${url}/kurir/orders`, {
+  method: 'GET',
+  headers: {
+    Authorization: `Bearer ${token}`,
+    'ngrok-skip-browser-warning': '1',
+    Accept: 'application/json',
+  },
+});
+
 
         if (!response.ok) {
             throw new Error(`Gagal mengambil pesanan: HTTP ${response.status}`);
         }
 
         const data: OrderKurir[] = await response.json();
-        setOrders(data.filter((o) => o.kurirStatus !== "APPROVED"));
+        setOrders(data.filter((o) => o.bendaharaStatus !== "APPROVED"));
     }, [url, getAuthToken]);
 
     useEffect(() => {
@@ -140,7 +150,7 @@ export default function ConfirmOrder() {
         try {
             const token = await getAuthToken();
 
-            const response = await fetch(`${url}/kurir/updateOrdersByKurir/${id}`, {
+            const response = await fetch(`${url}/kurir/updateOrder/${id}`, {
                 method: "PATCH",
                 headers: {
                     Authorization: `Bearer ${token}`,
