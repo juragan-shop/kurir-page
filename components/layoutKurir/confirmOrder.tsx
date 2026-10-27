@@ -103,17 +103,17 @@ export default function ConfirmOrder() {
 
         const token = await getAuthToken();
         if (!token) {
-  throw new Error('Token Clerk tidak tersedia. Silakan login kembali.');
-}
+            throw new Error('Token Clerk tidak tersedia. Silakan login kembali.');
+        }
 
-const response = await fetch(`${url}/kurir/orders`, {
-  method: 'GET',
-  headers: {
-    Authorization: `Bearer ${token}`,
-    'ngrok-skip-browser-warning': '1',
-    Accept: 'application/json',
-  },
-});
+        const response = await fetch(`${url}/kurir/orders`, {
+            method: 'GET',
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'ngrok-skip-browser-warning': '1',
+                Accept: 'application/json',
+            },
+        });
 
 
         if (!response.ok) {
@@ -190,7 +190,7 @@ const response = await fetch(`${url}/kurir/orders`, {
         }
     };
 
-   
+
 
     const card = cn(
         "rounded-2xl border transition-all duration-300",
@@ -201,7 +201,7 @@ const response = await fetch(`${url}/kurir/orders`, {
     const muted = isDark ? "text-neutral-400" : "text-slate-500";
     const tile = cn("rounded-xl p-3", isDark ? "bg-white/5" : "bg-slate-50");
 
-  
+
 
     if (!isLoaded || loading) {
         return (
@@ -220,7 +220,7 @@ const response = await fetch(`${url}/kurir/orders`, {
         );
     }
 
- 
+
 
     return (
         <section className="mx-auto w-full space-y-5 p-4 sm:p-6">

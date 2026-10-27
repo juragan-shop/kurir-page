@@ -56,6 +56,7 @@ export default function BottomNav() {
       return;
     }
     const role = user.publicMetadata?.role;
+    if(!role) return
     if (role !== 'kurir') {
       router.replace('https://instagram.com');
     }

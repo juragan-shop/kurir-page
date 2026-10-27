@@ -36,7 +36,7 @@ type FilterKey = "today" | "week" | "all";
 const filters: { key: FilterKey; label: string }[] = [
     { key: "today", label: "Hari ini" },
     { key: "week", label: "7 hari" },
-    { key: "all", label: "Semua" },
+
 ];
 
 const rupiah = new Intl.NumberFormat("id-ID", {
@@ -112,6 +112,8 @@ export default function HistoryOrder() {
                     method: "GET",
                     headers: {
                         Authorization: `Bearer ${token}`,
+                        'ngrok-skip-browser-warning': '1',
+                        Accept: 'application/json',
                     },
                 },
             );
@@ -297,7 +299,7 @@ export default function HistoryOrder() {
 
                                 <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600">
                                     <CheckCircle2 size={13} />
-                                    {order.bendaharaStatus?? "Selesai"}
+                                    {order.bendaharaStatus ?? "Selesai"}
                                 </span>
                             </div>
 
