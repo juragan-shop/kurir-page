@@ -175,58 +175,7 @@ export default function BottomNav() {
         </div>
 
         {/* Status online / offline */}
-        <button
-          type="button"
-          role="switch"
-          aria-checked={isOnline}
-          onClick={() => setIsOnline((v) => !v)}
-          className={cn(
-            "relative mt-5 flex w-full items-center justify-between",
-            "rounded-2xl px-4 py-3 text-left",
-            "bg-white/15 backdrop-blur transition",
-            "hover:bg-white/20 active:scale-[0.99]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-          )}
-        >
-          <span className="flex items-center gap-3">
-            <span className="relative flex h-3 w-3">
-              {isOnline && (
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-lime-300 opacity-75" />
-              )}
-              <span
-                className={cn(
-                  "relative inline-flex h-3 w-3 rounded-full",
-                  isOnline ? "bg-lime-300" : "bg-zinc-300"
-                )}
-              />
-            </span>
-
-            <span>
-              <span className="block text-sm font-semibold">
-                {isOnline ? "Kamu sedang online" : "Kamu sedang offline"}
-              </span>
-              <span className="block text-xs text-emerald-50/80">
-                {isOnline
-                  ? "Siap menerima pesanan baru"
-                  : "Aktifkan untuk menerima pesanan"}
-              </span>
-            </span>
-          </span>
-
-          <span
-            className={cn(
-              "flex h-7 w-12 items-center rounded-full p-1 transition-colors",
-              isOnline ? "bg-lime-300" : "bg-white/30"
-            )}
-          >
-            <span
-              className={cn(
-                "h-5 w-5 rounded-full bg-white shadow transition-transform duration-300",
-                isOnline ? "translate-x-5" : "translate-x-0"
-              )}
-            />
-          </span>
-        </button>
+    
       </header>
 
       {/* FIX 3: tidak perlu pb-28 lagi, nav sekarang ikut alur halaman (sticky) */}
