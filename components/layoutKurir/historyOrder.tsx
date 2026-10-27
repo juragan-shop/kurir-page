@@ -117,7 +117,7 @@ export default function HistoryOrder() {
             );
 
             if (!response.ok) {
-                throw new Error(`Gagal memuat riwayat: ${response.status}`);
+                throw new Error(`Gagal memuatsd riwayat: ${response.status}`);
             }
 
             const data: HistoryItem[] = await response.json();
