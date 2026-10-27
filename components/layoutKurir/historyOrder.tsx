@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -31,14 +32,6 @@ interface HistoryItem {
     createdAt: string;
 }
 
-type FilterKey = "today" | "week" | "all";
-
-const filters: { key: FilterKey; label: string }[] = [
-    { key: "today", label: "Hari ini" },
-    { key: "week", label: "7 hari" },
-
-];
-
 const rupiah = new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
@@ -60,24 +53,6 @@ const jam = (iso: string) =>
         minute: "2-digit",
     });
 
-const inRange = (iso: string, key: FilterKey): boolean => {
-    if (key === "all") return true;
-
-    const date = new Date(iso);
-    const now = new Date();
-
-    if (Number.isNaN(date.getTime())) return false;
-
-    if (key === "today") {
-        return date.toDateString() === now.toDateString();
-    }
-
-    const difference = now.getTime() - date.getTime();
-    const sevenDays = 7 * 24 * 60 * 60 * 1000;
-
-    return difference >= 0 && difference <= sevenDays;
-};
-
 export default function HistoryOrder() {
     const { getToken } = useAuth();
     const { isDark } = useTheme();
@@ -85,7 +60,6 @@ export default function HistoryOrder() {
     const [orders, setOrders] = useState<HistoryItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [filter, setFilter] = useState<FilterKey>("today");
 
     const url = process.env.NEXT_PUBLIC_BACKEND_URL;
 
@@ -103,7 +77,7 @@ export default function HistoryOrder() {
             const token = await getToken();
 
             if (!token) {
-                throw new Error("Token 4autentikasi tidak tersedia.");
+                throw new Error("Token autentikasi tidak tersedia.");
             }
 
             const response = await fetch(
@@ -112,14 +86,16 @@ export default function HistoryOrder() {
                     method: "GET",
                     headers: {
                         Authorization: `Bearer ${token}`,
-                        'ngrok-skip-browser-warning': '1',
-                        Accept: 'application/json',
+                        "ngrok-skip-browser-warning": "1",
+                        Accept: "application/json",
                     },
                 },
             );
 
             if (!response.ok) {
-                throw new Error(`Gagal memuatsd riwayat: ${response.status}`);
+                throw new Error(
+                    `Gagal memuat riwayat: ${response.status}`,
+                );
             }
 
             const data: HistoryItem[] = await response.json();
@@ -137,7 +113,9 @@ export default function HistoryOrder() {
             );
         } catch (err) {
             console.error("Gagal memuat riwayat:", err);
-            setError("Riwayat belum bisa dimuat. Periksa koneksi, lalu coba lagi.");
+            setError(
+                "Riwayat belum bisa dimuat. Periksa koneksi, lalu coba lagi.",
+            );
         } finally {
             setLoading(false);
         }
@@ -147,9 +125,15 @@ export default function HistoryOrder() {
         void loadHistory();
     }, [loadHistory]);
 
+    // Hanya tampilkan pesanan yang belum di-approve bendahara.
     const visible = useMemo(
-        () => orders.filter((order) => inRange(order.createdAt, filter)),
-        [orders, filter],
+        () =>
+            orders.filter(
+                (order) =>
+                    order.bendaharaStatus?.trim().toLowerCase() !==
+                    "approved",
+            ),
+        [orders],
     );
 
     const totalNilai = useMemo(
@@ -170,11 +154,15 @@ export default function HistoryOrder() {
     return (
         <section aria-labelledby="judul-riwayat" className="space-y-4">
             <div>
-                <h2 id="judul-riwayat" className="text-xl font-bold tracking-tight">
+                <h2
+                    id="judul-riwayat"
+                    className="text-xl font-bold tracking-tight"
+                >
                     Riwayat pengantaran
                 </h2>
+
                 <p className={cn("text-sm", muted)}>
-                    Pesanan yang sudah kamu antar sampai tujuan.
+                    Pesanan yang belum disetujui bendahara.
                 </p>
             </div>
 
@@ -187,39 +175,22 @@ export default function HistoryOrder() {
                 )}
             >
                 <div className="pr-4">
-                    <p className={cn("text-xs", muted)}>Jumlah pesanan</p>
-                    <p className="mt-0.5 text-2xl font-bold">{visible.length}</p>
+                    <p className={cn("text-xs", muted)}>
+                        Jumlah pesanan
+                    </p>
+                    <p className="mt-0.5 text-2xl font-bold">
+                        {visible.length}
+                    </p>
                 </div>
 
                 <div className="pl-4">
-                    <p className={cn("text-xs", muted)}>Total nilai pesanan</p>
+                    <p className={cn("text-xs", muted)}>
+                        Total nilai pesanan
+                    </p>
                     <p className="mt-0.5 truncate text-lg font-bold">
                         {rupiah.format(totalNilai)}
                     </p>
                 </div>
-            </div>
-
-            {/* Filter waktu */}
-            <div className="flex gap-2" role="group" aria-label="Filter waktu">
-                {filters.map(({ key, label }) => (
-                    <button
-                        key={key}
-                        type="button"
-                        aria-pressed={filter === key}
-                        onClick={() => setFilter(key)}
-                        className={cn(
-                            "h-10 flex-1 rounded-xl text-sm font-medium transition active:scale-[0.97]",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
-                            filter === key
-                                ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/25"
-                                : isDark
-                                    ? "bg-zinc-900 text-zinc-300 ring-1 ring-zinc-800 hover:bg-zinc-800"
-                                    : "bg-white text-zinc-600 ring-1 ring-emerald-100 hover:bg-emerald-50",
-                        )}
-                    >
-                        {label}
-                    </button>
-                ))}
             </div>
 
             {/* Loading */}
@@ -230,7 +201,13 @@ export default function HistoryOrder() {
                     aria-label="Memuat riwayat"
                 >
                     {[0, 1, 2].map((i) => (
-                        <li key={i} className={cn("h-32 animate-pulse rounded-2xl", card)} />
+                        <li
+                            key={i}
+                            className={cn(
+                                "h-32 animate-pulse rounded-2xl",
+                                card,
+                            )}
+                        />
                     ))}
                 </ul>
             )}
@@ -269,12 +246,13 @@ export default function HistoryOrder() {
                         <PackageCheck size={24} />
                     </span>
 
-                    <p className="font-semibold">Belum ada pesanan</p>
+                    <p className="font-semibold">
+                        Tidak ada pesanan menunggu persetujuan
+                    </p>
 
                     <p className={cn("text-sm", muted)}>
-                        {filter === "all"
-                            ? "Pesanan akan muncul di sini jika tersedia."
-                            : "Coba pilih rentang waktu yang lebih panjang."}
+                        Semua pesanan sudah disetujui bendahara atau belum
+                        ada pesanan yang tersedia.
                     </p>
                 </div>
             )}
@@ -283,10 +261,16 @@ export default function HistoryOrder() {
             {!loading && !error && visible.length > 0 && (
                 <ul className="space-y-3">
                     {visible.map((order) => (
-                        <li key={order.id} className={cn("rounded-2xl p-4", card)}>
+                        <li
+                            key={order.id}
+                            className={cn("rounded-2xl p-4", card)}
+                        >
                             <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                    <p className="truncate font-semibold">{order.namaBarang}</p>
+                                    <p className="truncate font-semibold">
+                                        {order.namaBarang}
+                                    </p>
+
                                     <p className={cn("mt-1 text-xs", muted)}>
                                         ID: {order.id}
                                     </p>
@@ -296,55 +280,86 @@ export default function HistoryOrder() {
                                     <CheckCircle2 size={13} />
                                     {order.kurirStatus ?? "Selesai"}
                                 </span>
-
-                                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600">
-                                    <CheckCircle2 size={13} />
-                                    {order.bendaharaStatus ?? "Selesai"}
-                                </span>
                             </div>
 
                             <div className={cn("mt-3 space-y-2 text-sm", muted)}>
                                 <p className="flex items-center gap-2">
                                     <User size={15} className="shrink-0" />
                                     <span className="truncate">
-                                        {order.namaPelanggan || "Nama pelanggan tidak tersedia"}
+                                        {order.namaPelanggan ||
+                                            "Nama pelanggan tidak tersedia"}
                                     </span>
                                 </p>
 
                                 <p className="flex items-start gap-2">
-                                    <MapPin size={15} className="mt-0.5 shrink-0" />
+                                    <MapPin
+                                        size={15}
+                                        className="mt-0.5 shrink-0"
+                                    />
                                     <span className="line-clamp-2">
-                                        {order.alamat || "Alamat tidak tersedia"}
+                                        {order.alamat ||
+                                            "Alamat tidak tersedia"}
                                     </span>
                                 </p>
 
                                 {order.catatanBarang && (
-                                    <p>Catatan barang: {order.catatanBarang}</p>
+                                    <p>
+                                        Catatan barang: {order.catatanBarang}
+                                    </p>
                                 )}
 
                                 {order.catatanPelanggan && (
-                                    <p>Catatan pelanggan: {order.catatanPelanggan}</p>
+                                    <p>
+                                        Catatan pelanggan:{" "}
+                                        {order.catatanPelanggan}
+                                    </p>
                                 )}
                             </div>
 
                             <div
                                 className={cn(
-                                    "mt-3 flex items-end justify-between gap-3 border-t pt-3",
-                                    isDark ? "border-zinc-800" : "border-emerald-100",
+                                    "mt-3 flex flex-wrap items-end justify-between gap-3 border-t pt-3",
+                                    isDark
+                                        ? "border-zinc-800"
+                                        : "border-emerald-100",
                                 )}
                             >
-                                <p className={cn("flex items-center gap-1.5 text-xs", muted)}>
-                                    <Clock size={13} className="shrink-0" />
-                                    {formatTanggalIndonesia(new Date(order.createdAt))},{" "}
-                                    {jam(order.createdAt)}
-                                </p>
+                                <div className="space-y-2">
+                                    <p
+                                        className={cn(
+                                            "flex items-center gap-1.5 text-xs",
+                                            muted,
+                                        )}
+                                    >
+                                        <Clock
+                                            size={13}
+                                            className="shrink-0"
+                                        />
+                                        {formatTanggalIndonesia(
+                                            new Date(order.createdAt),
+                                        )}
+                                        , {jam(order.createdAt)}
+                                    </p>
+
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-600">
+                                        <Clock size={13} />
+                                        Bendahara:{" "}
+                                        {order.bendaharaStatus || "Pending"}
+                                    </span>
+                                </div>
 
                                 <div className="shrink-0 text-right">
                                     <p className="font-bold">
-                                        {rupiah.format(toNumber(order.totalHarga))}
+                                        {rupiah.format(
+                                            toNumber(order.totalHarga),
+                                        )}
                                     </p>
+
                                     <p className={cn("text-xs", muted)}>
-                                        {numberFormat.format(toNumber(order.jumlahBarang))} barang
+                                        {numberFormat.format(
+                                            toNumber(order.jumlahBarang),
+                                        )}{" "}
+                                        barang
                                     </p>
                                 </div>
                             </div>

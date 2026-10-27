@@ -3,7 +3,7 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { ArrowLeft, MessageCircle, RefreshCw, Search, Send } from "lucide-react";
-
+import { io, type Socket } from "socket.io-client";
 import useTheme from "@/hooks/useTheme";
 import { cn } from "@/utils";
 
@@ -104,7 +104,7 @@ export default function Chat({ initialRoomId = null }: { initialRoomId?: string 
         setRooms((prev) => prev.map((r) => (r.id === id ? { ...r, unread: 0 } : r)));
         setActiveId(id);
         // TODO: sesuaikan endpoint "tandai sudah dibaca"
-        api(`/chat/rooms/${id}/read`, { method: "POST" }).catch(() => {});
+        api(`/chat/rooms/${id}/read`, { method: "POST" }).catch(() => { });
     };
 
     if (activeId) {
@@ -337,70 +337,87 @@ function ChatWindow({
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Ambil pesan, lalu cek pesan baru tiap 4 detik
+    const socketRef = useRef<Socket | null>(null);
+    const { getToken } = useAuth();
+
     useEffect(() => {
-        let active = true;
+        let socket: Socket | undefined;
+        let cancelled = false;
 
-        const load = async () => {
-            try {
-                // TODO: sesuaikan endpoint
-                const data = await api<ChatMessage[]>(`/chat/rooms/${roomId}/messages`);
-                // pesan lokal yang masih "sending"/"failed" tetap dipertahankan
-                if (active) setMessages((prev) => [...data, ...prev.filter((m) => m.status)]);
-            } catch {
-                /* gagal sementara: coba lagi di putaran berikutnya */
-            } finally {
-                if (active) setLoading(false);
-            }
-        };
+        async function connect() {
+            const token = await getToken();
 
-        load();
-        const timer = setInterval(load, 4000);
+            if (!token || cancelled) return;
+
+            socket = io(
+                `${process.env.NEXT_PUBLIC_BACKEND_URL}/chat`,
+                {
+                    auth: { token },
+                    transports: ["websocket"],
+                }
+            );
+
+            socketRef.current = socket;
+
+            socket.on("connect", () => {
+                socket?.emit("joinOrderRoom", { orderId: roomId });
+            });
+
+            socket.on("message", (message) => {
+                setMessages((prev) => {
+                    if (prev.some((m) => m.id === message.id)) {
+                        return prev;
+                    }
+
+                    return [
+                        ...prev,
+                        {
+                            id: message.id,
+                            sender:
+                                message.senderRole === "KURIR"
+                                    ? "kurir"
+                                    : "pelanggan",
+                            text: message.content,
+                            createdAt: message.createdAt,
+                        },
+                    ];
+                });
+            });
+        }
+
+        connect();
+
         return () => {
-            active = false;
-            clearInterval(timer);
+            cancelled = true;
+            socket?.disconnect();
+            socketRef.current = null;
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [roomId]);
-
+    }, [roomId, getToken]);
     // Selalu gulir ke pesan terbaru (hanya di dalam kotak chat, bukan seluruh halaman)
     useEffect(() => {
         const el = scrollRef.current;
         if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
     }, [messages.length]);
 
-    const send = async (text: string, retryId?: string) => {
-        const clean = text.trim();
-        if (!clean) return;
+    const send = (text: string) => {
+        const content = text.trim();
+        const socket = socketRef.current;
 
-        const tmpId = retryId ?? `tmp-${Date.now()}`;
+        if (!content || !socket?.connected) return;
 
-        setMessages((prev) =>
-            retryId
-                ? prev.map((m) => (m.id === retryId ? { ...m, status: "sending" } : m))
-                : [
-                    ...prev,
-                    {
-                        id: tmpId,
-                        sender: "kurir",
-                        text: clean,
-                        createdAt: new Date().toISOString(),
-                        status: "sending",
-                    },
-                ]
+        socket.emit(
+            "chatUserToKurir",
+            {
+                orderId: roomId,
+                content,
+            },
+            (response: { id?: string; error?: string }) => {
+                if (response?.error) {
+                    console.error("Pesan gagal dikirim:", response.error);
+                }
+            }
         );
-
-        try {
-            // TODO: sesuaikan endpoint & body
-            const saved = await api<ChatMessage>(`/chat/rooms/${roomId}/messages`, {
-                method: "POST",
-                body: JSON.stringify({ text: clean }),
-            });
-            setMessages((prev) => prev.map((m) => (m.id === tmpId ? saved : m)));
-        } catch {
-            setMessages((prev) => prev.map((m) => (m.id === tmpId ? { ...m, status: "failed" } : m)));
-        }
     };
-
     const onSubmit = (e: FormEvent) => {
         e.preventDefault();
         const text = draft;
@@ -486,13 +503,22 @@ function ChatWindow({
                             {m.status === "failed" ? (
                                 <button
                                     type="button"
-                                    onClick={() => send(m.text, m.id)}
-                                    className="mt-1 text-xs font-medium text-rose-500 underline-offset-2 hover:underline"
+                                    onClick={() => send(m.text)}
+                                    className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-rose-500 transition-colors hover:text-rose-600 hover:underline"
                                 >
-                                    Gagal terkirim · Kirim ulang
+                                    <span>Gagal terkirim</span>
+                                    <span aria-hidden="true">·</span>
+                                    <span>Kirim ulang</span>
                                 </button>
                             ) : (
-                                <span className={cn("mt-1 text-[11px]", muted)}>
+                                <span
+                                    className={cn(
+                                        "mt-1 block text-[11px]",
+                                        muted,
+                                        m.status === "sending" && "animate-pulse"
+                                    )}
+                                    aria-live="polite"
+                                >
                                     {m.status === "sending" ? "Mengirim..." : jam(m.createdAt)}
                                 </span>
                             )}

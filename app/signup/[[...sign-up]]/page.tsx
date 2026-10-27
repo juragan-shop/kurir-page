@@ -216,6 +216,7 @@ export default function Page() {
         unsafeMetadata: {
           nomorTelpon,
           alamat,
+          role: "kurir",
           latitude: latitude ? Number(latitude) : null,
           longitude: longitude ? Number(longitude) : null,
 

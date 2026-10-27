@@ -31,7 +31,7 @@ type OrderKurir = {
     catatanBarang?: string | null;
     catatanPelanggan?: string | null;
     totalHarga?: string | number | null;
-    alamat?: string | null;
+    alamatPelanggan: string | null;
     latitude?: string | number | null;
     longitude?: string | number | null;
     kurirStatus?: string | null;
@@ -68,8 +68,8 @@ const buildNavigationUrl = (order: OrderKurir): string | null => {
     }
 
     // Cadangan: kalau koordinat tidak ada, pakai alamat teks
-    if (order.alamat) {
-        return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(order.alamat)}&travelmode=driving`;
+    if (order.alamatPelanggan) {
+        return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(order.alamatPelanggan)}&travelmode=driving`;
     }
 
     return null;
@@ -337,100 +337,127 @@ export default function ConfirmOrder() {
                                 </div>
 
                                 {/* Titik antar */}
-                                <div
-                                    className={cn(
-                                        "space-y-3 rounded-2xl p-4",
-                                        isDark
-                                            ? "bg-blue-500/10 ring-1 ring-blue-400/20"
-                                            : "bg-blue-50 ring-1 ring-blue-100",
-                                    )}
-                                >
-                                    <p className="flex items-center gap-2 text-sm font-semibold">
-                                        {hasCoord ? (
-                                            <MapPin size={16} className="text-blue-600" />
-                                        ) : (
-                                            <MapPinOff size={16} className="text-amber-500" />
-                                        )}
-                                        Titik antar
-                                    </p>
+                          
+<div
+    className={cn(
+        "space-y-3 rounded-2xl p-4",
+        isDark
+            ? "bg-blue-500/10 ring-1 ring-blue-400/20"
+            : "bg-blue-50 ring-1 ring-blue-100",
+    )}
+>
+    <p className="flex items-center gap-2 text-sm font-semibold">
+        {hasCoord ? (
+            <MapPin size={16} className="text-blue-600" />
+        ) : (
+            <MapPinOff size={16} className="text-amber-500" />
+        )}
+        Titik antar
+    </p>
 
-                                    {order.alamat && (
-                                        <p className={cn("text-sm", muted)}>{order.alamat}</p>
-                                    )}
+    {order.alamatPelanggan && (
+        <p className={cn("text-sm", muted)}>
+            {order.alamatPelanggan}
+        </p>
+    )}
 
-                                    {hasCoord ? (
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div className={cn("rounded-xl p-3", isDark ? "bg-white/5" : "bg-white")}>
-                                                <p className={cn("text-[11px]", muted)}>Latitude</p>
-                                                <p className="font-mono text-sm">{lat.toFixed(6)}</p>
-                                            </div>
-                                            <div className={cn("rounded-xl p-3", isDark ? "bg-white/5" : "bg-white")}>
-                                                <p className={cn("text-[11px]", muted)}>Longitude</p>
-                                                <p className="font-mono text-sm">{lng.toFixed(6)}</p>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-amber-600">
-                                            Koordinat pelanggan belum tersedia
-                                            {order.alamat ? ", navigasi memakai alamat teks." : "."}
-                                        </p>
-                                    )}
+    {hasCoord ? (
+        <div className="grid grid-cols-2 gap-2">
+            <div
+                className={cn(
+                    "rounded-xl p-3",
+                    isDark ? "bg-white/5" : "bg-white",
+                )}
+            >
+                <p className={cn("text-[11px]", muted)}>
+                    Latitude
+                </p>
+                <p className="font-mono text-sm">
+                    {lat.toFixed(6)}
+                </p>
+            </div>
 
-                                    <div className="flex flex-wrap gap-2">
-                                        {navUrl ? (
-                                            <a
-                                                href={navUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className={cn(
-                                                    "inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl px-4",
-                                                    "bg-gradient-to-r from-blue-700 to-blue-500 text-sm font-semibold text-white",
-                                                    "shadow-md shadow-blue-600/30 transition-all duration-200",
-                                                    "hover:brightness-110 active:scale-95",
-                                                )}
-                                            >
-                                                <Navigation size={17} />
-                                                Navigasi di Google Maps
-                                            </a>
-                                        ) : (
-                                            <span
-                                                className={cn(
-                                                    "inline-flex h-12 flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold opacity-60",
-                                                    isDark ? "bg-white/10" : "bg-slate-200 text-slate-500",
-                                                )}
-                                            >
-                                                <MapPinOff size={17} />
-                                                Lokasi belum tersedia
-                                            </span>
-                                        )}
+            <div
+                className={cn(
+                    "rounded-xl p-3",
+                    isDark ? "bg-white/5" : "bg-white",
+                )}
+            >
+                <p className={cn("text-[11px]", muted)}>
+                    Longitude
+                </p>
+                <p className="font-mono text-sm">
+                    {lng.toFixed(6)}
+                </p>
+            </div>
+        </div>
+    ) : (
+        <p className="text-sm text-amber-600">
+            Koordinat belum tersedia. Navigasi akan menggunakan alamat teks.
+        </p>
+    )}
 
-                                        {hasCoord && (
-                                            <button
-                                                type="button"
-                                                onClick={() => handleCopy(order)}
-                                                className={cn(
-                                                    "inline-flex h-12 items-center justify-center gap-2 rounded-xl border px-4",
-                                                    "text-sm font-medium transition-all duration-200 active:scale-95",
-                                                    isDark
-                                                        ? "border-white/15 hover:bg-white/10"
-                                                        : "border-blue-200 bg-white text-blue-700 hover:bg-blue-50",
-                                                )}
-                                            >
-                                                {copiedId === order.id ? (
-                                                    <>
-                                                        <Check size={16} className="text-emerald-500" />
-                                                        Tersalin
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Copy size={16} />
-                                                        Salin
-                                                    </>
-                                                )}
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
+    <div className="flex flex-wrap gap-2">
+        {navUrl ? (
+            <a
+                href={navUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                    "inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl px-4",
+                    "bg-gradient-to-r from-blue-700 to-blue-500 text-sm font-semibold text-white",
+                    "shadow-md shadow-blue-600/30 transition-all duration-200",
+                    "hover:brightness-110 active:scale-95",
+                )}
+            >
+                <Navigation size={17} />
+                Navigasi di Google Maps
+            </a>
+        ) : (
+            <span
+                className={cn(
+                    "inline-flex h-12 flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold opacity-60",
+                    isDark
+                        ? "bg-white/10"
+                        : "bg-slate-200 text-slate-500",
+                )}
+            >
+                <MapPinOff size={17} />
+                Alamat belum tersedia
+            </span>
+        )}
+
+        {hasCoord && (
+            <button
+                type="button"
+                onClick={() => handleCopy(order)}
+                className={cn(
+                    "inline-flex h-12 items-center justify-center gap-2 rounded-xl border px-4",
+                    "text-sm font-medium transition-all duration-200 active:scale-95",
+                    isDark
+                        ? "border-white/15 hover:bg-white/10"
+                        : "border-blue-200 bg-white text-blue-700 hover:bg-blue-50",
+                )}
+            >
+                {copiedId === order.id ? (
+                    <>
+                        <Check
+                            size={16}
+                            className="text-emerald-500"
+                        />
+                        Tersalin
+                    </>
+                ) : (
+                    <>
+                        <Copy size={16} />
+                        Salin
+                    </>
+                )}
+            </button>
+        )}
+    </div>
+</div>
+
 
                                 {/* Catatan */}
                                 {(order.catatanBarang || order.catatanPelanggan) && (
