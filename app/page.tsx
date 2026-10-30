@@ -58,7 +58,7 @@ export default function BottomNav() {
     const role = user.publicMetadata?.role;
     if(!role) return
     if (role !== 'kurir') {
-      router.replace('https://instagram.com');
+      router.replace('https://tokojuraganikan.co.id');
     }
   }, [isLoaded, isSignedIn, user, router]);
 
@@ -285,48 +285,48 @@ export default function BottomNav() {
                 Sekarang `sticky bottom-0` di dalam alur flex: selalu di dasar layar,
                 tapi saat scroll sampai bawah, konten berhenti DI ATAS nav (tidak tertutup).
                 Wrapper pointer-events-none supaya area kosong di kiri-kanan pil tetap bisa disentuh. */}
-      <div className="pointer-events-none sticky bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2">
-        <nav
-          aria-label="Navigasi utama"
+   <div className="pointer-events-none sticky bottom-0 z-40 px-2 pb-[env(safe-area-inset-bottom)] pt-1">
+  <nav
+    aria-label="Navigasi utama"
+    className={cn(
+      "pointer-events-auto mx-auto flex w-full max-w-md items-center justify-around gap-1",
+      "rounded-3xl p-1.5",
+      "border shadow-xl backdrop-blur-xl",
+      isDark
+        ? "border-emerald-900/60 bg-zinc-900/90 shadow-black/50"
+        : "border-emerald-100 bg-white/90 shadow-emerald-900/10"
+    )}
+  >
+    {navItems.map(({ key, label, Icon }) => {
+      const isActive = activeTab === key;
+
+      return (
+        <button
+          key={key}
+          type="button"
+          onClick={() => setActiveTab(key)}
+          aria-label={label}
+          aria-current={isActive ? "page" : undefined}
           className={cn(
-            "pointer-events-auto mx-auto flex w-full max-w-md items-center justify-around gap-1",
-            "rounded-3xl p-2",
-            "border shadow-xl backdrop-blur-xl",
-            isDark
-              ? "border-emerald-900/60 bg-zinc-900/90 shadow-black/50"
-              : "border-emerald-100 bg-white/90 shadow-emerald-900/10"
+            "flex flex-1 items-center justify-center gap-2",
+            "rounded-2xl px-3 py-2",
+            "text-sm font-semibold",
+            "transition-all duration-300",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
+            isActive
+              ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
+              : isDark
+                ? "text-zinc-400 hover:bg-zinc-800 hover:text-emerald-400"
+                : "text-zinc-500 hover:bg-emerald-50 hover:text-emerald-600"
           )}
         >
-          {navItems.map(({ key, label, Icon }) => {
-            const isActive = activeTab === key;
-
-            return (
-              <button
-                key={key}
-                type="button"
-                onClick={() => setActiveTab(key)}
-                aria-label={label}
-                aria-current={isActive ? "page" : undefined}
-                className={cn(
-                  "flex flex-1 items-center justify-center gap-2",
-                  "rounded-2xl px-3 py-2.5",
-                  "text-sm font-semibold",
-                  "transition-all duration-300",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500",
-                  isActive
-                    ? "bg-emerald-600 text-white shadow-md shadow-emerald-600/30"
-                    : isDark
-                      ? "text-zinc-400 hover:bg-zinc-800 hover:text-emerald-400"
-                      : "text-zinc-500 hover:bg-emerald-50 hover:text-emerald-600"
-                )}
-              >
-                <Icon size={20} strokeWidth={isActive ? 2.4 : 2} />
-                {isActive && <span>{label}</span>}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
+          <Icon size={20} strokeWidth={isActive ? 2.4 : 2} />
+          {isActive && <span>{label}</span>}
+        </button>
+      );
+    })}
+  </nav>
+</div>
     </div>
   );
 }

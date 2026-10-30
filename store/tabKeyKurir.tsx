@@ -8,7 +8,7 @@ export const tabStrategies = {
     profile:<></> ,
     historyOrder: <HistoryOrder/>,
     orderPage: <ConfirmOrder/>,
-    chat: <Chat/>,
+    // chat: <Chat/>,
 
  
 } as const;
